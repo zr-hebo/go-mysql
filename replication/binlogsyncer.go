@@ -105,8 +105,8 @@ type BinlogSyncerConfig struct {
 	// https://mariadb.com/kb/en/library/annotate_rows_event/
 	DumpCommandFlag uint16
 
-	//Option function is used to set outside of BinlogSyncerConfig， between mysql connection and COM_REGISTER_SLAVE
-	//For MariaDB: slave_gtid_ignore_duplicates、skip_replication、slave_until_gtid
+	// Option function is used to set outside of BinlogSyncerConfig， between mysql connection and COM_REGISTER_SLAVE
+	// For MariaDB: slave_gtid_ignore_duplicates、skip_replication、slave_until_gtid
 	Option func(*client.Conn) error
 }
 
@@ -242,7 +242,7 @@ func (b *BinlogSyncer) registerSlave() error {
 		}
 	}
 
-	//set read timeout
+	// set read timeout
 	if b.cfg.ReadTimeout > 0 {
 		_ = b.c.SetReadDeadline(time.Now().Add(b.cfg.ReadTimeout))
 	}
@@ -261,30 +261,30 @@ func (b *BinlogSyncer) registerSlave() error {
 	// save last last connection id for kill
 	b.lastConnectionID = b.c.GetConnectionID()
 
-	//for mysql 5.6+, binlog has a crc32 checksum
-	//before mysql 5.6, this will not work, don't matter.:-)
-	if r, err := b.c.Execute("SHOW GLOBAL VARIABLES LIKE 'BINLOG_CHECKSUM'"); err != nil {
-		return errors.Trace(err)
-	} else {
-		s, _ := r.GetString(0, 1)
-		if s != "" {
-			// maybe CRC32 or NONE
-
-			// mysqlbinlog.cc use NONE, see its below comments:
-			// Make a notice to the server that this client
-			// is checksum-aware. It does not need the first fake Rotate
-			// necessary checksummed.
-			// That preference is specified below.
-
-			if _, err = b.c.Execute(`SET @master_binlog_checksum='NONE'`); err != nil {
-				return errors.Trace(err)
-			}
-
-			// if _, err = b.c.Execute(`SET @master_binlog_checksum=@@global.binlog_checksum`); err != nil {
-			// 	return errors.Trace(err)
-			// }
-		}
-	}
+	// for mysql 5.6+, binlog has a crc32 checksum
+	// before mysql 5.6, this will not work, don't matter.:-)
+	// if r, err := b.c.Execute("SHOW GLOBAL VARIABLES LIKE 'BINLOG_CHECKSUM'"); err != nil {
+	// 	return errors.Trace(err)
+	// } else {
+	// 	s, _ := r.GetString(0, 1)
+	// 	if s != "" {
+	// 		// maybe CRC32 or NONE
+	//
+	// 		// mysqlbinlog.cc use NONE, see its below comments:
+	// 		// Make a notice to the server that this client
+	// 		// is checksum-aware. It does not need the first fake Rotate
+	// 		// necessary checksummed.
+	// 		// That preference is specified below.
+	//
+	// 		if _, err = b.c.Execute(`SET @master_binlog_checksum='NONE'`); err != nil {
+	// 			return errors.Trace(err)
+	// 		}
+	//
+	// 		// if _, err = b.c.Execute(`SET @master_binlog_checksum=@@global.binlog_checksum`); err != nil {
+	// 		// 	return errors.Trace(err)
+	// 		// }
+	// 	}
+	// }
 
 	if b.cfg.Flavor == MariaDBFlavor {
 		// Refer https://github.com/alibaba/canal/wiki/BinlogChange(MariaDB5&10)
@@ -294,14 +294,14 @@ func (b *BinlogSyncer) registerSlave() error {
 			return errors.Errorf("failed to set @mariadb_slave_capability=4: %v", err)
 		}
 	}
-
-	if b.cfg.HeartbeatPeriod > 0 {
-		_, err = b.c.Execute(fmt.Sprintf("SET @master_heartbeat_period=%d;", b.cfg.HeartbeatPeriod))
-		if err != nil {
-			log.Errorf("failed to set @master_heartbeat_period=%d, err: %v", b.cfg.HeartbeatPeriod, err)
-			return errors.Trace(err)
-		}
-	}
+	//
+	// if b.cfg.HeartbeatPeriod > 0 {
+	// 	_, err = b.c.Execute(fmt.Sprintf("SET @master_heartbeat_period=%d;", b.cfg.HeartbeatPeriod))
+	// 	if err != nil {
+	// 		log.Errorf("failed to set @master_heartbeat_period=%d, err: %v", b.cfg.HeartbeatPeriod, err)
+	// 		return errors.Trace(err)
+	// 	}
+	// }
 
 	if err = b.writeRegisterSlaveCommand(); err != nil {
 		return errors.Trace(err)
@@ -550,7 +550,7 @@ func (b *BinlogSyncer) writeRegisterSlaveCommand() error {
 	binary.LittleEndian.PutUint16(data[pos:], b.cfg.Port)
 	pos += 2
 
-	//replication rank, not used
+	// replication rank, not used
 	binary.LittleEndian.PutUint32(data[pos:], 0)
 	pos += 4
 
@@ -709,7 +709,7 @@ func (b *BinlogSyncer) onStream(s *BinlogStreamer) {
 			continue
 		}
 
-		//set read timeout
+		// set read timeout
 		if b.cfg.ReadTimeout > 0 {
 			_ = b.c.SetReadDeadline(time.Now().Add(b.cfg.ReadTimeout))
 		}
@@ -741,13 +741,13 @@ func (b *BinlogSyncer) onStream(s *BinlogStreamer) {
 }
 
 func (b *BinlogSyncer) parseEvent(s *BinlogStreamer, data []byte) error {
-	//skip OK byte, 0x00
+	// skip OK byte, 0x00
 	data = data[1:]
 
 	needACK := false
 	if b.cfg.SemiSyncEnabled && (data[0] == SemiSyncIndicator) {
 		needACK = (data[1] == 0x01)
-		//skip semi sync header
+		// skip semi sync header
 		data = data[2:]
 	}
 
