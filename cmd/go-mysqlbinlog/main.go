@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/pingcap/errors"
 
@@ -45,6 +46,7 @@ func main() {
 		RawModeEnabled:  *rawMode,
 		SemiSyncEnabled: *semiSync,
 		UseDecimal:      true,
+		HeartbeatPeriod: 5 * time.Second,
 	}
 
 	b := replication.NewBinlogSyncer(cfg)
@@ -62,7 +64,7 @@ func main() {
 			s   *replication.BinlogStreamer
 			err error
 		)
-		if len(*gtid) > 0 {
+		if pos.Name == "" {
 			gset, err := mysql.ParseGTIDSet(*flavor, *gtid)
 			if err != nil {
 				fmt.Printf("Failed to parse gtid %s with flavor %s, error: %v\n",
@@ -73,6 +75,7 @@ func main() {
 				fmt.Printf("Start sync by GTID error: %v\n", errors.ErrorStack(err))
 				return
 			}
+
 		} else {
 			s, err = b.StartSync(pos)
 			if err != nil {
