@@ -32,6 +32,10 @@ var backupPath = flag.String("backup_path", "", "backup path to store binlog fil
 
 var rawMode = flag.Bool("raw", false, "Use raw mode")
 
+var heartbeatPeriod = flag.Duration("heartbeat", 30*time.Second, "Master heartbeat period")
+var disableRetrySync = flag.Bool("disable_retry", false, "Disable auto retry sync on connection failure")
+var maxReconnectAttempts = flag.Int("max_reconnect", 0, "Maximum reconnect attempts, 0 means infinite")
+
 func main() {
 	flag.Parse()
 
@@ -39,14 +43,16 @@ func main() {
 		ServerID: 101,
 		Flavor:   *flavor,
 
-		Host:            *host,
-		Port:            uint16(*port),
-		User:            *user,
-		Password:        *password,
-		RawModeEnabled:  *rawMode,
-		SemiSyncEnabled: *semiSync,
-		UseDecimal:      true,
-		HeartbeatPeriod: 5 * time.Second,
+		Host:                 *host,
+		Port:                 uint16(*port),
+		User:                 *user,
+		Password:             *password,
+		RawModeEnabled:       *rawMode,
+		SemiSyncEnabled:      *semiSync,
+		UseDecimal:           true,
+		HeartbeatPeriod:      *heartbeatPeriod,
+		DisableRetrySync:     *disableRetrySync,
+		MaxReconnectAttempts: *maxReconnectAttempts,
 	}
 
 	b := replication.NewBinlogSyncer(cfg)
