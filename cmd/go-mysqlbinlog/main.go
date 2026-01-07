@@ -96,12 +96,14 @@ func main() {
 				// Try to output all left events
 				events := s.DumpEvents()
 				for _, e := range events {
+					fmt.Printf("[%s] ", time.Now().Format("2006-01-02 15:04:05.000"))
 					e.Dump(os.Stdout)
 				}
 				fmt.Printf("Get event error: %v\n", errors.ErrorStack(err))
 				return
 			}
 
+			fmt.Printf("[%s] ", time.Now().Format("2006-01-02 15:04:05.000"))
 			e.Dump(os.Stdout)
 		}
 	}
